@@ -1,0 +1,42 @@
+export const employees = [
+  {
+    id: "EMP001",
+    name: "John Smith",
+    department: "IT",
+    position: "AI Engineer",
+    status: "Active",
+    email: "john@company.com",
+  },
+  {
+    id: "EMP002",
+    name: "Sarah Wilson",
+    department: "HR",
+    position: "Manager",
+    status: "Active",
+    email: "sarah@company.com",
+  },
+  {
+    id: "EMP003",
+    name: "Michael Lee",
+    department: "Finance",
+    position: "Accountant",
+    status: "Leave",
+    email: "michael@company.com",
+  },
+  {
+    id: "EMP004",
+    name: "Emma Johnson",
+    department: "IT",
+    position: "Frontend Developer",
+    status: "Inactive",
+    email: "emma@company.com",
+  },
+  {
+    id: "EMP005",
+    name: "David Brown",
+    department: "Security",
+    position: "Supervisor",
+    status: "Active",
+    email: "david@company.com",
+  },
+];
