@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import UsersToolbar from "@/components/users/UsersToolbar";
 import EmployeeTable from "@/components/users/EmployeeTable";
 import AddEmployeeModal from "@/components/users/AddEmployeeModal";
 
-import { employees } from "@/data/employees";
+import { getEmployees } from "@/services/employeeService";
 
 export default function Users() {
   const [search, setSearch] = useState("");
@@ -15,16 +15,40 @@ export default function Users() {
 
   const [openModal, setOpenModal] = useState(false);
 
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+
+      const response = await getEmployees();
+
+      console.log("Employees:", response);
+
+      setEmployees(response.employees);
+    } catch (error) {
+      console.error("Failed to load employees:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(search.toLowerCase()) ||
-      emp.id.toLowerCase().includes(search.toLowerCase());
+      emp.employee_id.toLowerCase().includes(search.toLowerCase());
 
     const matchesDepartment =
       department === "All" || emp.department === department;
 
-    const matchesStatus =
-      status === "All" || emp.status === status;
+    // Status is not stored in MongoDB yet
+    const matchesStatus = true;
 
     return (
       matchesSearch &&
@@ -72,15 +96,24 @@ export default function Users() {
         setStatus={setStatus}
       />
 
-      {/* Table */}
+      {/* Employee Table */}
 
-      <EmployeeTable employees={filteredEmployees} />
+      {loading ? (
+        <div className="rounded-xl bg-white p-10 text-center shadow">
+          Loading employees...
+        </div>
+      ) : (
+        <EmployeeTable employees={filteredEmployees} />
+      )}
 
-      {/* Modal */}
+      {/* Register Employee Modal */}
 
       <AddEmployeeModal
         open={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={() => {
+          setOpenModal(false);
+          loadEmployees();
+        }}
       />
 
     </div>

@@ -1,0 +1,35 @@
+$kind: http-request
+name: http://127.0.0.1:5000/api/employees/register
+description: ""
+url: http://127.0.0.1:5000/api/employees/register
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: "{\r
+
+    \  \"employee\": {\r
+
+    \    \"id\": \"EMP001\",\r
+
+    \    \"name\": \"Manan Jain\",\r
+
+    \    \"email\": \"manan@test.com\",\r
+
+    \    \"phone\": \"9876543210\",\r
+
+    \    \"department\": \"IT\",\r
+
+    \    \"position\": \"Developer\"\r
+
+    \  },\r
+
+    \  \"images\": [\r
+
+    \    \"data:image/jpeg;base64,SGVsbG8=\"\r
+
+    \  ]\r
+
+    }"
+order: 1784741416527

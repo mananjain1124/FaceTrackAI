@@ -1,0 +1,11 @@
+$kind: http-request
+name: http://127.0.0.1:5000/api/employees/TCA2309120
+description: ""
+url: http://127.0.0.1:5000/api/employees/TCA2309120
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: ""
+order: 4163547655999951
