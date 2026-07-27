@@ -1,6 +1,6 @@
+import os
 import cv2
 import numpy as np
-import os
 
 from insightface.app import FaceAnalysis
 
@@ -9,33 +9,38 @@ class FaceEmbedding:
 
     def __init__(self):
 
-        self.app = FaceAnalysis(
-            name="buffalo_l"
-        )
+        self.app = FaceAnalysis(name="buffalo_l")
 
         self.app.prepare(
             ctx_id=0,
             det_size=(640, 640)
         )
 
+    # -------------------------------------------------
+    # Generate embedding from ONE image
+    # -------------------------------------------------
+
     def generate_embedding(self, image_path):
 
         image = cv2.imread(image_path)
 
         if image is None:
+            print("Could not read image:", image_path)
             return None
 
         faces = self.app.get(image)
 
         if len(faces) == 0:
+            print("No face detected:", image_path)
             return None
 
         return faces[0].embedding
 
-    def generate_employee_embedding(
-        self,
-        image_folder
-    ):
+    # -------------------------------------------------
+    # Generate average embedding from employee folder
+    # -------------------------------------------------
+
+    def generate_employee_embedding(self, image_folder):
 
         embeddings = []
 
@@ -46,27 +51,39 @@ class FaceEmbedding:
             ):
                 continue
 
-            path = os.path.join(
+            image_path = os.path.join(
                 image_folder,
                 file
             )
 
-            emb = self.generate_embedding(path)
+            embedding = self.generate_embedding(
+                image_path
+            )
 
-            if emb is not None:
-                embeddings.append(emb)
+            if embedding is not None:
+                embeddings.append(embedding)
 
         if len(embeddings) == 0:
             return None
 
         embeddings = np.array(embeddings)
 
-        final_embedding = np.mean(
+        return np.mean(
             embeddings,
             axis=0
         )
 
-        return final_embedding
+    # -------------------------------------------------
+    # Generate embedding from live camera image
+    # -------------------------------------------------
+
+    def generate_live_embedding(self, image_path):
+
+        return self.generate_embedding(image_path)
+
+    # -------------------------------------------------
+    # Save embedding
+    # -------------------------------------------------
 
     def save_embedding(
         self,
