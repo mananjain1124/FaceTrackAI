@@ -1,10 +1,14 @@
+import os
 from pymongo import MongoClient
-from config import Config
 
-client = MongoClient(Config.MONGO_URI)
+MONGO_URI = os.getenv(
+    "MONGO_URI",
+    "mongodb://localhost:27017/facetrack"
+)
 
-db = client[Config.DATABASE_NAME]
+client = MongoClient(MONGO_URI)
+
+db = client["facetrack"]
 
 employees = db["employees"]
-
 attendance = db["attendance"]

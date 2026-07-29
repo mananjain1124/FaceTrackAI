@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+
+  mongodb:
+    image: mongo:7
+    container_name: facetrack_mongodb
+    restart: always
+
+    ports:
+      - "27017:27017"
+
+    volumes:
+      - mongodb_data:/data/db
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+
+    container_name: facetrack_backend
+
+    restart: always
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      - mongodb
+
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/facetrack
+
+    volumes:
+      - ./server:/app
+      - ./server/uploads:/app/uploads
+      - ./server/embeddings:/app/embeddings
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+
+    container_name: facetrack_frontend
+
+    restart: always
+
+    ports:
+      - "5173:5173"
+
+    depends_on:
+      - backend
+
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+
+volumes:
+  mongodb_data:
