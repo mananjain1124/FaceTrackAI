@@ -21,11 +21,7 @@ export const sidebarItems = [
     icon: Users,
     path: "/users",
   },
-  {
-    title: "Register User",
-    icon: UserPlus,
-    path: "/register",
-  },
+  
   {
     title: "Attendance",
     icon: CalendarDays,
