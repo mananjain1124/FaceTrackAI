@@ -74,3 +74,19 @@ export async function getEmployee(
 
   return response.data;
 }
+
+/* ----------------------------------------
+   Re-Register Face
+----------------------------------------- */
+
+export async function reRegisterFace(
+  employeeId: string,
+  images: string[]
+) {
+  const response = await api.put(
+    `/api/employees/${employeeId}/face`,
+    { images }
+  );
+
+  return response.data;
+}

@@ -1,13 +1,13 @@
 interface Props {
-  captured: number;
+  current: number;
   total: number;
 }
 
 export default function CaptureProgress({
-  captured,
+  current,
   total,
 }: Props) {
-  const percent = Math.round((captured / total) * 100);
+  const percent = Math.round((current / total) * 100);
 
   return (
     <div className="rounded-2xl border bg-white shadow-lg p-5">
@@ -33,7 +33,7 @@ export default function CaptureProgress({
           </p>
 
           <p className="text-sm text-slate-500">
-            {captured} / {total}
+            {current} / {total}
           </p>
 
         </div>
@@ -63,7 +63,7 @@ export default function CaptureProgress({
 
       </div>
 
-      {captured === total && (
+      {current === total && (
         <div className="mt-4 rounded-xl bg-green-100 p-3">
 
           <p className="font-semibold text-green-700">

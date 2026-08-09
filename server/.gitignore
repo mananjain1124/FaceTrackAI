@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Environment
+.env
+
+# Runtime data (face images, embeddings, temp scans)
+uploads/
+embeddings/
+temp/
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/

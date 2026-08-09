@@ -1,14 +1,30 @@
-import { Eye, EyeOff, Lock, Mail, ArrowRight, BrainCircuit } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ArrowRight, BrainCircuit, Users } from "lucide-react";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "@/services/authService";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    
+    try {
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -99,11 +115,17 @@ export default function Login() {
           {/* Headings */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold gradient-text">FaceTrack AI</h1>
-            <p className="text-slate-500 text-sm mt-1.5">Smart Face Recognition Attendance</p>
+            <p className="text-slate-500 text-sm mt-1.5 font-medium uppercase tracking-widest">Admin Portal</p>
           </div>
 
           {/* Form */}
           <form className="space-y-5" onSubmit={handleSubmit}>
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm text-center font-medium">
+                {error}
+              </div>
+            )}
+            
             {/* Email */}
             <div>
               <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -117,7 +139,9 @@ export default function Login() {
                 <input
                   type="email"
                   placeholder="admin@facetrack.ai"
-                  defaultValue="admin@facetrack.ai"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="
                     w-full rounded-xl
                     bg-white/[0.04] border border-white/[0.08]
@@ -144,6 +168,9 @@ export default function Login() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                   className="
                     w-full rounded-xl
                     bg-white/[0.04] border border-white/[0.08]
@@ -211,8 +238,26 @@ export default function Login() {
             </button>
           </form>
 
+          {/* Signup Link */}
+          <div className="mt-8 pt-6 border-t border-white/[0.08] text-center flex flex-col gap-3">
+            <Link 
+              to="/signup" 
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.08]"
+            >
+              Don't have an account? Sign up
+            </Link>
+            
+            <Link 
+              to="/kiosk" 
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-all border border-transparent hover:border-white/[0.08]"
+            >
+              <Users size={16} />
+              Employee? Go to Kiosk Mode
+            </Link>
+          </div>
+
           {/* Footer note */}
-          <p className="mt-6 text-center text-[11px] text-slate-700">
+          <p className="mt-6 text-center text-[11px] text-slate-600">
             Protected by AI face recognition · v2.0.0
           </p>
         </div>

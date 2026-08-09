@@ -1,8 +1,14 @@
+import logging
 import os
+
 import cv2
 import numpy as np
 
 from insightface.app import FaceAnalysis
+
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class FaceEmbedding:
@@ -25,13 +31,13 @@ class FaceEmbedding:
         image = cv2.imread(image_path)
 
         if image is None:
-            print("Could not read image:", image_path)
+            logger.warning("Could not read image: %s", image_path)
             return None
 
         faces = self.app.get(image)
 
         if len(faces) == 0:
-            print("No face detected:", image_path)
+            logger.warning("No face detected: %s", image_path)
             return None
 
         return faces[0].embedding
@@ -92,12 +98,12 @@ class FaceEmbedding:
     ):
 
         os.makedirs(
-            "embeddings",
+            Config.EMBEDDING_FOLDER,
             exist_ok=True
         )
 
         path = os.path.join(
-            "embeddings",
+            Config.EMBEDDING_FOLDER,
             f"{employee_id}.npy"
         )
 

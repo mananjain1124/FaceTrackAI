@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
-import { Clock3, CalendarDays, BrainCircuit, BadgeCheck, TrendingUp } from "lucide-react";
+import { Clock3, CalendarDays, BrainCircuit } from "lucide-react";
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  presentRate: number;
+  orgName: string;
+  totalEmployees: number;
+  presentToday: number;
+}
+
+export default function HeroSection({ presentRate, orgName, totalEmployees, presentToday }: HeroSectionProps) {
   const [time, setTime] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const attendancePct = 87;
   const circumference = 2 * Math.PI * 40;
-  const dashOffset = circumference - (attendancePct / 100) * circumference;
+  const dashOffset = circumference - (presentRate / 100) * circumference;
 
   return (
     <div
@@ -32,7 +38,7 @@ export default function HeroSection() {
             AI Face Recognition System
           </div>
           <h1 className="text-3xl xl:text-4xl font-bold text-white leading-tight">
-            Welcome Back, <span className="gradient-text">Administrator</span> 👋
+            Welcome Back, <span className="gradient-text">{orgName}</span> 👋
           </h1>
           <p className="mt-3 max-w-xl text-blue-200/80 text-sm leading-relaxed">
             Monitor employees, attendance, live recognition, camera health and AI performance in real time.
@@ -41,14 +47,6 @@ export default function HeroSection() {
             <div className="flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur px-4 py-2 text-sm border border-white/10">
               <BrainCircuit size={16} className="text-cyan-300" />
               <span className="text-white/90">AI Recognition Active</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl bg-emerald-500/20 backdrop-blur px-4 py-2 text-sm border border-emerald-500/20">
-              <BadgeCheck size={16} className="text-emerald-300" />
-              <span className="text-emerald-200">98.7% Accuracy</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl bg-amber-500/20 backdrop-blur px-4 py-2 text-sm border border-amber-500/20">
-              <TrendingUp size={16} className="text-amber-300" />
-              <span className="text-amber-200">↑ 4.2% vs last week</span>
             </div>
           </div>
         </div>
@@ -83,13 +81,13 @@ export default function HeroSection() {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-bold">{attendancePct}%</span>
+                <span className="text-xl font-bold">{Math.round(presentRate)}%</span>
               </div>
             </div>
             <div>
               <p className="text-blue-200 text-xs mb-1">Today's Attendance</p>
-              <h2 className="text-2xl font-bold">312</h2>
-              <p className="text-slate-400 text-xs">of 356 employees</p>
+              <h2 className="text-2xl font-bold">{presentToday}</h2>
+              <p className="text-slate-400 text-xs">of {totalEmployees} employees</p>
               <p className="mt-2 text-emerald-300 text-xs font-medium">● Present today</p>
             </div>
           </div>

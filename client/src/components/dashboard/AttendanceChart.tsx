@@ -1,14 +1,6 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { useTheme } from "@/context/ThemeContext";
-
-const data = [
-  { day: "Mon", attendance: 280, target: 320 },
-  { day: "Tue", attendance: 295, target: 320 },
-  { day: "Wed", attendance: 310, target: 320 },
-  { day: "Thu", attendance: 300, target: 320 },
-  { day: "Fri", attendance: 325, target: 320 },
-  { day: "Sat", attendance: 260, target: 320 },
-];
+import type { DayCount } from "@/types";
 
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
@@ -28,20 +20,30 @@ function CustomTooltip({ active, payload, label }: any) {
   return null;
 }
 
-export default function AttendanceChart() {
+interface AttendanceChartProps {
+  weeklyTrend: DayCount[];
+}
+
+export default function AttendanceChart({ weeklyTrend }: AttendanceChartProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+
+  const data = weeklyTrend.map((item) => ({
+    day: new Date(item.date).toLocaleDateString("en", { weekday: "short" }),
+    present: item.present,
+  }));
+
+  const maxPresent = Math.max(1, ...data.map((d) => d.present));
 
   return (
     <div className="glass-card rounded-2xl p-6 card-hover">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Weekly Attendance</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Attendance vs target this week</p>
+          <p className="text-xs text-slate-500 mt-0.5">Attendance this week</p>
         </div>
         <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded-full bg-blue-500 inline-block" />Attendance</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 rounded-full bg-violet-500 inline-block" />Target</span>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={300}>
@@ -51,17 +53,12 @@ export default function AttendanceChart() {
               <stop offset="5%" stopColor="#3b82f6" stopOpacity={isDark ? 0.3 : 0.15} />
               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
             </linearGradient>
-            <linearGradient id="targetFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={isDark ? 0.2 : 0.1} />
-              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(148,163,184,0.07)" : "rgba(0,0,0,0.05)"} vertical={false} />
           <XAxis dataKey="day" tick={{ fill: isDark ? "#64748b" : "#94a3b8", fontSize: 12 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: isDark ? "#64748b" : "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} domain={[240, 340]} />
+          <YAxis tick={{ fill: isDark ? "#64748b" : "#94a3b8", fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, maxPresent * 1.2]} />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: isDark ? "rgba(148,163,184,0.1)" : "rgba(0,0,0,0.05)" }} />
-          <Area type="monotone" dataKey="target" stroke="#8b5cf6" strokeWidth={1.5} strokeDasharray="5 5" fill="url(#targetFill)" dot={false} />
-          <Area type="monotone" dataKey="attendance" stroke="#3b82f6" strokeWidth={2.5} fill="url(#attendanceFill)"
+          <Area type="monotone" dataKey="present" stroke="#3b82f6" strokeWidth={2.5} fill="url(#attendanceFill)"
             dot={{ fill: "#3b82f6", r: 4, strokeWidth: 2, stroke: isDark ? "#1e3a8a" : "#eff6ff" }}
             activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2, fill: isDark ? "#1e3a8a" : "#eff6ff" }} />
         </AreaChart>

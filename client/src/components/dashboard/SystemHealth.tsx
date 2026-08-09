@@ -1,19 +1,25 @@
-import { Cpu, HardDrive, Database, Zap, Wifi } from "lucide-react";
+import { Database, Wifi, Zap, Users, UserCheck } from "lucide-react";
 
-const metrics = [
-  { label: "CPU Usage", icon: Cpu, value: 27, unit: "%", color: "from-blue-500 to-cyan-500", status: "Normal", statusColor: "text-emerald-600 dark:text-emerald-400" },
-  { label: "RAM Usage", icon: HardDrive, value: 43, unit: "%", color: "from-violet-500 to-purple-600", status: "Normal", statusColor: "text-emerald-600 dark:text-emerald-400" },
-  { label: "Recognition Acc.", icon: Zap, value: 98.7, unit: "%", color: "from-emerald-500 to-teal-500", status: "Excellent", statusColor: "text-emerald-600 dark:text-emerald-400" },
-];
+interface SystemHealthProps {
+  presentRate: number;
+  totalEmployees: number;
+  presentToday: number;
+}
 
-const services = [
-  { name: "GPU Acceleration", icon: Zap, active: true },
-  { name: "MongoDB", icon: Database, active: true },
-  { name: "AI Service", icon: Cpu, active: true },
-  { name: "WebSocket", icon: Wifi, active: false },
-];
+export default function SystemHealth({ presentRate, totalEmployees, presentToday }: SystemHealthProps) {
+  const metrics = [
+    { label: "Recognition Present Rate", icon: Zap, value: presentRate, unit: "%", width: Math.min(presentRate, 100), color: "from-emerald-500 to-teal-500", status: "Normal", statusColor: "text-emerald-600 dark:text-emerald-400" },
+    { label: "Total Employees", icon: Users, value: totalEmployees, unit: "", width: 100, color: "from-blue-500 to-cyan-500", status: "Normal", statusColor: "text-emerald-600 dark:text-emerald-400" },
+    { label: "Present Today", icon: UserCheck, value: presentToday, unit: "", width: totalEmployees > 0 ? Math.min(Math.round((presentToday / totalEmployees) * 100), 100) : 0, color: "from-violet-500 to-purple-600", status: "Normal", statusColor: "text-emerald-600 dark:text-emerald-400" },
+  ];
 
-export default function SystemHealth() {
+  const services = [
+    { name: "MongoDB", icon: Database, active: true },
+    { name: "API Server", icon: Wifi, active: true },
+    { name: "Recognition Service", icon: Zap, active: true },
+    { name: "WebSocket", icon: Wifi, active: false },
+  ];
+
   return (
     <div className="glass-card rounded-2xl p-6 card-hover">
       <div className="mb-5">
@@ -41,7 +47,7 @@ export default function SystemHealth() {
               <div className="h-2 rounded-full bg-slate-100 dark:bg-white/[0.06] overflow-hidden">
                 <div
                   className={`h-2 rounded-full bg-gradient-to-r ${m.color}`}
-                  style={{ width: `${m.value}%`, transition: "width 0.8s ease" }}
+                  style={{ width: `${m.width}%`, transition: "width 0.8s ease" }}
                 />
               </div>
             </div>

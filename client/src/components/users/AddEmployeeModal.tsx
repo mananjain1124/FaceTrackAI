@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { X, CheckCircle } from "lucide-react";
 
 import FaceCapture from "@/features/camera/components/FaceCapture";
@@ -9,19 +10,29 @@ interface Props {
   onClose: () => void;
 }
 
+const EMPTY_EMPLOYEE = {
+  id: "",
+  name: "",
+  email: "",
+  phone: "",
+  department: "IT",
+  position: "",
+};
+
 export default function AddEmployeeModal({ open, onClose }: Props) {
   const [step, setStep] = useState(1);
 
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
 
-  const [employee, setEmployee] = useState({
-    id: "",
-    name: "",
-    email: "",
-    phone: "",
-    department: "IT",
-    position: "",
-  });
+  const [employee, setEmployee] = useState(EMPTY_EMPLOYEE);
+
+  useEffect(() => {
+    if (open) {
+      setStep(1);
+      setCapturedImages([]);
+      setEmployee(EMPTY_EMPLOYEE);
+    }
+  }, [open]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -44,15 +55,26 @@ export default function AddEmployeeModal({ open, onClose }: Props) {
 
       console.log(result);
 
-      alert("Employee Registered Successfully!");
+      toast.success("Employee Registered Successfully!");
 
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+
+      const message =
+        err?.response?.data?.message ||
+        "Registration failed. Please try again.";
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleCaptureComplete = useCallback((images: string[]) => {
+    setCapturedImages(images);
+  }, []);
+
   if (!open) return null;
   return (
     <div
@@ -281,9 +303,7 @@ export default function AddEmployeeModal({ open, onClose }: Props) {
             "
               >
                 <FaceCapture
-                  onComplete={(images) => {
-                    setCapturedImages(images);
-                  }}
+                  onComplete={handleCaptureComplete}
                 />
               </div>
 

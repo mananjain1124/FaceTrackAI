@@ -1,9 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "@/features/auth/pages/Login";
+import Signup from "@/features/auth/pages/Signup";
 import Dashboard from "@/features/dashboard/pages/Dashboard";
 import Users from "@/features/users/pages/Users";
 import Attendance from "@/features/attendance/pages/Attendance";
+import Kiosk from "@/features/attendance/pages/Kiosk";
 import Camera from "@/features/camera/pages/Camera";
 import Reports from "@/features/reports/pages/Reports";
 import Analytics from "@/features/analytics/pages/Analytics";
@@ -17,6 +19,8 @@ export default function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/kiosk" element={<Kiosk />} />
 
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

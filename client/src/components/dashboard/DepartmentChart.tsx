@@ -1,17 +1,29 @@
-const departments = [
-  { name: "Engineering", pct: 45, count: 160, color: "from-blue-500 to-cyan-500", shadow: "shadow-blue-500/20" },
-  { name: "Finance",     pct: 22, count: 78,  color: "from-violet-500 to-purple-600", shadow: "shadow-violet-500/20" },
-  { name: "HR",          pct: 13, count: 46,  color: "from-emerald-500 to-teal-500", shadow: "shadow-emerald-500/20" },
-  { name: "Design",      pct: 10, count: 36,  color: "from-pink-500 to-rose-500", shadow: "shadow-pink-500/20" },
-  { name: "IT Ops",      pct: 10, count: 36,  color: "from-amber-500 to-orange-500", shadow: "shadow-amber-500/20" },
+interface DepartmentChartProps {
+  departmentDistribution: { department: string; present: number }[];
+  totalEmployees: number;
+}
+
+const gradientColors = [
+  { color: "from-blue-500 to-cyan-500", shadow: "shadow-blue-500/20" },
+  { color: "from-violet-500 to-purple-600", shadow: "shadow-violet-500/20" },
+  { color: "from-emerald-500 to-teal-500", shadow: "shadow-emerald-500/20" },
+  { color: "from-pink-500 to-rose-500", shadow: "shadow-pink-500/20" },
+  { color: "from-amber-500 to-orange-500", shadow: "shadow-amber-500/20" },
 ];
 
-export default function DepartmentChart() {
+export default function DepartmentChart({ departmentDistribution, totalEmployees }: DepartmentChartProps) {
+  const departments = departmentDistribution.map((dept, i) => ({
+    name: dept.department,
+    count: dept.present,
+    pct: Math.round((dept.present / (totalEmployees || 1)) * 100),
+    ...gradientColors[i % gradientColors.length],
+  }));
+
   return (
     <div className="glass-card rounded-2xl p-6 card-hover">
       <div className="mb-5">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Department Distribution</h2>
-        <p className="text-xs text-slate-500 mt-0.5">356 employees across departments</p>
+        <p className="text-xs text-slate-500 mt-0.5">{totalEmployees} employees</p>
       </div>
 
       <div className="space-y-5">

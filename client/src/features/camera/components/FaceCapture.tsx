@@ -26,6 +26,12 @@ export default function FaceCapture({
 
   const { ready, landmarkerRef } = useFaceLandmarker();
 
+  const onCompleteRef = useRef(onComplete);
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   const [cameraReady, setCameraReady] = useState(false);
 
   const [landmarks, setLandmarks] = useState<any[]>([]);
@@ -275,13 +281,13 @@ export default function FaceCapture({
 
       setCurrentStep(10);
 
-      onComplete(images);
+      onCompleteRef.current(images);
 
     }, 2000);
 
     return () => clearTimeout(timer);
 
-  }, [images, onComplete]);
+  }, [images]);
 
   // ---------------------------------
   // Current Instruction
@@ -329,12 +335,9 @@ export default function FaceCapture({
   };
 
   // ---------------------------------
-  // Progress Percentage
+  // Current Instruction
   // ---------------------------------
 
-  const progress = Math.round(
-    (images.length / TOTAL_IMAGES) * 100
-  );
     return (
 
     <div className="flex flex-col h-full gap-6">
@@ -403,8 +406,6 @@ export default function FaceCapture({
         current={images.length}
 
         total={TOTAL_IMAGES}
-
-        progress={progress}
 
       />
           </div>

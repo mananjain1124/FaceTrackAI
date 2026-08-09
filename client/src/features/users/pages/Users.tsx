@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Search, Download, UserPlus, Pencil, Trash2, ShieldCheck,
   ArrowUp, ArrowDown, ChevronLeft, ChevronRight, Filter,
 } from "lucide-react";
-import { getEmployees } from "@/services/employeeService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
+import { getEmployees, deleteEmployee } from "@/services/employeeService";
 import AddEmployeeModal from "@/components/users/AddEmployeeModal";
+import EditEmployeeModal from "@/components/users/EditEmployeeModal";
+import type { Employee } from "@/types";
 
 const deptColors: Record<string, string> = {
   Engineering: "bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400",
@@ -13,6 +18,8 @@ const deptColors: Record<string, string> = {
   Design:      "bg-pink-100 dark:bg-pink-500/15 text-pink-700 dark:text-pink-400",
   "IT Ops":    "bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400",
   IT:          "bg-cyan-100 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-400",
+  Security:    "bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400",
+  Administration: "bg-slate-100 dark:bg-slate-500/15 text-slate-700 dark:text-slate-400",
 };
 
 const avatarGradients = [
@@ -21,30 +28,54 @@ const avatarGradients = [
   "from-amber-500 to-orange-500", "from-cyan-500 to-sky-500",
 ];
 
+function toCSV(employees: Employee[]) {
+  const headers = ["Employee ID", "Name", "Email", "Phone", "Department", "Position"];
+  const rows = employees.map(e =>
+    [e.employee_id, e.name, e.email, e.phone, e.department, e.position].join(",")
+  );
+  return [headers.join(","), ...rows].join("\n");
+}
+
+function downloadCSV(content: string, filename: string) {
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function Users() {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("All");
   const [openModal, setOpenModal] = useState(false);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [sortField, setSortField] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const rowsPerPage = 8;
 
-  useEffect(() => { loadEmployees(); }, []);
+  const queryClient = useQueryClient();
 
-  const loadEmployees = async () => {
-    try {
-      setLoading(true);
-      const res = await getEmployees();
-      setEmployees(res.employees);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: () => getEmployees(),
+  });
+
+  const employees: Employee[] = data?.employees ?? [];
+
+  const deleteMutation = useMutation({
+    mutationFn: (employeeId: string) => deleteEmployee(employeeId),
+    onSuccess: () => {
+      toast.success("Employee deleted");
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || "Delete failed");
+    },
+  });
 
   const handleSort = (field: string) => {
     if (sortField === field) setSortOrder(o => o === "asc" ? "desc" : "asc");
@@ -58,8 +89,8 @@ export default function Users() {
         (department === "All" || e.department === department);
     })
     .sort((a, b) => {
-      const av = String(a[sortField]).toLowerCase();
-      const bv = String(b[sortField]).toLowerCase();
+      const av = String(a[sortField as keyof Employee] ?? "").toLowerCase();
+      const bv = String(b[sortField as keyof Employee] ?? "").toLowerCase();
       return av < bv ? (sortOrder === "asc" ? -1 : 1) : av > bv ? (sortOrder === "asc" ? 1 : -1) : 0;
     });
 
@@ -91,7 +122,6 @@ export default function Users() {
       {/* Toolbar */}
       <div className="bg-white dark:bg-slate-900/60 dark:backdrop-blur-xl border border-slate-200 dark:border-white/[0.06] rounded-2xl p-4 shadow-sm dark:shadow-none">
         <div className="flex flex-col xl:flex-row gap-3">
-          {/* Search */}
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -102,7 +132,6 @@ export default function Users() {
             />
           </div>
 
-          {/* Department filter */}
           <div className="flex items-center gap-2">
             <Filter size={14} className="text-slate-400 shrink-0" />
             <select
@@ -110,12 +139,14 @@ export default function Users() {
               onChange={e => { setDepartment(e.target.value); setPage(1); }}
               className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2.5 text-sm outline-none cursor-pointer"
             >
-              {["All", "Engineering", "Finance", "HR", "Design", "IT Ops", "IT"].map(d => <option key={d}>{d}</option>)}
+              {["All", "Engineering", "Finance", "HR", "Design", "IT Ops", "IT", "Security", "Administration"].map(d => <option key={d}>{d}</option>)}
             </select>
           </div>
 
-          {/* Export */}
-          <button className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all">
+          <button
+            onClick={() => downloadCSV(toCSV(filtered), "employees.csv")}
+            className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all"
+          >
             <Download size={15} />
             Export CSV
           </button>
@@ -124,7 +155,7 @@ export default function Users() {
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-900/60 dark:backdrop-blur-xl border border-slate-200 dark:border-white/[0.06] rounded-2xl overflow-hidden shadow-sm dark:shadow-none">
-        {loading ? (
+        {isLoading ? (
           <div className="py-20 text-center">
             <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-slate-500 text-sm">Loading employees...</p>
@@ -194,16 +225,26 @@ export default function Users() {
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 dark:bg-red-500/15 px-2.5 py-1 text-red-600 dark:text-red-400 text-xs font-medium">
-                            ✕ Missing
+                            Missing
                           </span>
                         )}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/25 flex items-center justify-center transition-all">
+                          <button
+                            onClick={() => setEditEmployee(emp)}
+                            className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/25 flex items-center justify-center transition-all"
+                          >
                             <Pencil size={14} />
                           </button>
-                          <button className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/15 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/25 flex items-center justify-center transition-all">
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete ${emp.name} (${emp.employee_id})?`)) {
+                                deleteMutation.mutate(emp.employee_id);
+                              }
+                            }}
+                            className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-500/15 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/25 flex items-center justify-center transition-all"
+                          >
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -240,7 +281,13 @@ export default function Users() {
         )}
       </div>
 
-      <AddEmployeeModal open={openModal} onClose={() => { setOpenModal(false); loadEmployees(); }} />
+      <AddEmployeeModal open={openModal} onClose={() => setOpenModal(false)} />
+      <EditEmployeeModal
+        open={!!editEmployee}
+        employee={editEmployee}
+        onClose={() => setEditEmployee(null)}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["employees"] })}
+      />
     </div>
   );
 }

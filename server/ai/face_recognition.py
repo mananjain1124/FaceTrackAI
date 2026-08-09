@@ -1,22 +1,63 @@
+import logging
 import os
-import numpy as np
 
+import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
-from database import employees
+import database
 from ai.face_embedding import FaceEmbedding
+from config import Config
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------
+# Lazy recognizer singleton + in-memory embedding cache.
+#
+# `FaceRecognition` construction loads the insightface model and reading
+# every `.npy` embedding from disk is expensive. The kiosk/attendance
+# pages scan every 2-3 seconds, so we keep embeddings cached and only
+# reload when the version counter changes. Employee mutations bump the
+# counter via `invalidate_embedding_cache()`.
+# ---------------------------------------------------------------------
+
+_recognizer = None
+_embeddings_version = 0
+
+
+def invalidate_embedding_cache():
+    global _embeddings_version
+    _embeddings_version += 1
+
+
+def reset_recognizer():
+    global _recognizer
+    _recognizer = None
+
+
+def get_recognizer():
+    global _recognizer
+    if _recognizer is None:
+        try:
+            _recognizer = FaceRecognition()
+        except Exception as exc:
+            _recognizer = None
+            raise RuntimeError(
+                f"Failed to initialize face recognition model: {exc}"
+            ) from exc
+    return _recognizer
 
 
 class FaceRecognition:
 
-    def __init__(self):
+    def __init__(self, threshold=None):
 
         self.embedding_model = FaceEmbedding()
 
-        # Similarity threshold
-        self.threshold = 0.75
+        self.threshold = threshold or Config.RECOGNITION_THRESHOLD
 
         self.employee_embeddings = []
+
+        self.loaded_version = -1
 
         self.load_embeddings()
 
@@ -26,11 +67,18 @@ class FaceRecognition:
 
     def load_embeddings(self):
 
+        global _embeddings_version
+
+        if self.loaded_version == _embeddings_version:
+            return
+
+        self.loaded_version = _embeddings_version
+
         self.employee_embeddings = []
 
         employee_count = 0
 
-        for employee in employees.find():
+        for employee in database.employees.find():
 
             employee_count += 1
 
@@ -40,7 +88,7 @@ class FaceRecognition:
                 continue
 
             if not os.path.exists(embedding_path):
-                print(f"Embedding not found: {embedding_path}")
+                logger.warning("Embedding not found: %s", embedding_path)
                 continue
 
             try:
@@ -67,20 +115,21 @@ class FaceRecognition:
 
             except Exception as e:
 
-                print(f"Failed loading {embedding_path}: {e}")
+                logger.warning("Failed loading %s: %s", embedding_path, e)
 
-        print("=" * 60)
-        print(f"MongoDB Employees : {employee_count}")
-        print(f"Embeddings Loaded : {len(self.employee_embeddings)}")
-        print("=" * 60)
+        logger.info(
+            "MongoDB Employees : %s | Embeddings Loaded : %s",
+            employee_count,
+            len(self.employee_embeddings),
+        )
 
     # --------------------------------------------------
     # Recognize One Image
     # --------------------------------------------------
 
-    def recognize(self, image_path):
+    def recognize(self, image_path, threshold=None):
 
-        # Reload latest employees
+        # Reload embeddings only if employee data changed
         self.load_embeddings()
 
         # Generate embedding from one image
@@ -116,29 +165,21 @@ class FaceRecognition:
 
             )[0][0]
 
-            print(
-                f"{employee['employee_id']} -> {score:.4f}"
-            )
-
             if score > best_score:
 
                 best_score = score
 
                 best_employee = employee
 
-        print("=" * 60)
+        threshold = threshold if threshold is not None else self.threshold
 
         if best_employee is not None:
-
-            print("Best Match :", best_employee["employee_id"])
-
-        else:
-
-            print("Best Match : None")
-
-        print("Confidence :", round(best_score, 4))
-
-        print("=" * 60)
+            logger.info(
+                "Best match: %s | confidence: %.4f | threshold: %s",
+                best_employee["employee_id"],
+                round(best_score, 4),
+                threshold,
+            )
 
         # Successful Recognition
 
@@ -148,7 +189,7 @@ class FaceRecognition:
 
             and
 
-            best_score >= self.threshold
+            best_score >= threshold
 
         ):
 

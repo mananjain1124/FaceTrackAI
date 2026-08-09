@@ -18,11 +18,17 @@ interface Props {
     tooClose: boolean;
     tooFar: boolean;
   };
+  instruction: string;
+  headPose: "CENTER" | "LEFT" | "RIGHT" | "UP" | "DOWN";
+  blinked: boolean;
 }
 
 export default function FaceStatus({
   currentStep,
   quality,
+  instruction,
+  headPose,
+  blinked,
 }: Props) {
   const getStatus = () => {
     switch (currentStep) {
@@ -174,8 +180,25 @@ export default function FaceStatus({
           </h2>
 
           <p className="text-slate-500">
-            {status.message}
+            {instruction || status.message}
           </p>
+
+          {(currentStep >= 3 || headPose !== "CENTER") && (
+            <div className="mt-2 flex items-center gap-2 text-xs">
+              <span
+                className={`rounded-full px-2 py-0.5 font-medium ${
+                  blinked
+                    ? "bg-green-100 text-green-700"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {blinked ? "Blink detected" : "Waiting for blink"}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-500">
+                Head: {headPose}
+              </span>
+            </div>
+          )}
 
         </div>
 
